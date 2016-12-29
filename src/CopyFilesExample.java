@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
 
 public class CopyFilesExample {
 
@@ -35,6 +37,15 @@ public class CopyFilesExample {
 		copyFileUsingJava7Files(source, dest);
 		end = System.nanoTime();
 		System.out.println("Time taken by Java7 Files Copy = " + (end - start));
+
+		// Log 분석해서 INSERT, UPDATE, DELTE 목록 뽑기
+		// 이동전의 폴더
+		String inFolder = "C:/Users/BLOW/Downloads/tmp1/tmp1/org";
+		// 이동후의 폴더
+		String outFolder = "C:\\Users\\BLOW\\Desktop";
+
+		// 이동전의 폴더에 있는 파일들을 읽는다.
+		List<File> dirList = getDirFileList(inFolder);
 	}
 
 	private static void copyFileUsingFileStreams(File source, File dest) throws IOException {
@@ -69,5 +80,39 @@ public class CopyFilesExample {
 
 	private static void copyFileUsingJava7Files(File source, File dest) throws IOException {
 		Files.copy(source.toPath(), dest.toPath());
+	}
+	
+	/**
+	 * <p>메소드명		: chkFile</p>
+	 * <p>설명			: 폴더생성</p>
+	 * <p>메소드인수1 	: String path</p>
+	 * <p>메소드리턴값	: N/A</p>
+	 * <p>예외처리		: Exception</p>
+	 */
+	public static void mkDir(String path) throws Exception {
+		File file = new File(path);
+		if (!file.isDirectory()) {
+			file.mkdirs();
+		}
+	}
+
+	// 디렉토리의 파일 리스트를 읽는 메소드
+	public static List<File> getDirFileList(String dirPath) {
+		// 디렉토리 파일 리스트
+		List<File> dirFileList = null;
+
+		// 파일 목록을 요청한 디렉토리를 가지고 파일 객체를 생성함
+		File dir = new File(dirPath);
+
+		// 디렉토리가 존재한다면
+		if (dir.exists()) {
+			// 파일 목록을 구함
+			File[] files = dir.listFiles();
+
+			// 파일 배열을 파일 리스트로 변화함
+			dirFileList = Arrays.asList(files);
+		}
+
+		return dirFileList;
 	}
 }
