@@ -46,6 +46,24 @@ public class CopyFilesExample {
 
 		// 이동전의 폴더에 있는 파일들을 읽는다.
 		List<File> dirList = getDirFileList(inFolder);
+
+		// 폴더의 사이즈만큼 돌면서 파일을 이동시킨다.
+		for (int i = 0; i < dirList.size(); i++) {
+			// i번째 저장되어 있는 파일을 불러온다.
+			String fileName = dirList.get(i).getName();
+			System.out.println(fileName);
+			// 파일 삭제를 원한다면
+			// fileDelete(inFolder+"\\"+fileName);
+
+			// 파일 복사을 원한다면
+			// fileCopy(inFolder+"\\"+fileName, outFolder+"\\"+fileName);
+
+			// 파일 이동을 원한다면
+			// fileMove(inFolder+"\\"+fileName, outFolder+"\\"+fileName);
+
+			// 파일 생성을 원한다면
+			// fileMake("C:/Users/INTERPARK/Desktop/test.txt");
+		  }
 	}
 
 	private static void copyFileUsingFileStreams(File source, File dest) throws IOException {
