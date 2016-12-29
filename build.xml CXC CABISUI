@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<project basedir="." default="build" name="../CABIS">
+	<!-- setup dir -->
+	<!-- Hudson        : D:\hudson\HOME, 
+	     Hudson jobs   : D:\hudson\HOME\jobs\CABIS 
+	 -->
+	<!-- Java60_IBM    : D:\hudson\Java60_IBM -->
+	<!-- Tomcat        : D:\tomcat  -->
+	<!-- Ant           : D:\Util\apache-ant-1.8.2  -->
+	<!-- build_new.xml : D:\hudson\HOME\jobs\CABIS\workspace\CABIS\build_new.xml  -->
+	<!-- Jeus Reboot lib : D:\ci\jeus_lib    -->
+
+	<property file="build.properties" />
+	<property name="target.dir" value="target" />
+	<property name="deploy.host" value="165.141.208.237" />
+	<property name="deploy.user" value="jeus6" />
+	<property name="deploy.password" value="jeus6" />
+	<property name="was.deploy.dir" value="/home/jeus6/jeus/webhome/app_home/CABIS" />       <!--JEUS 서버 소스경로-->
+	<property name="ftp.deploy.dir" value="/home/jeus6" />
+	<property name="telnet_prompt"       value="jeus6" />
+
+	<path id="classpath">
+		<!--fileset dir="/jenkins/lib" includes="*.*"/>
+		<fileset dir="/home/jeus6/jeus/webhome/app_home/CABIS/WEB-INF/lib" includes="**/*.*" />
+		<fileset dir="/home/jeus6/jeus/webhome/app_home/CABIS/WEB-INF/classes" includes="**/*.class" ></fileset-->
+    </path>
+	
+	<!-- CABIS -->
+	<target name="build">
+		<echo message="Test Start!!" />	
+	</target>
+	
+	<target name="prepare" depends="build">
+		<echo message="Do Nothing!!" />
+		<mkdir dir="${dir.build}" />
+		<mkdir dir="${dir.dist}" />
+	</target>
+	
+	<target name="compile" depends="prepare">
+   		<echo message="compile - start"/>
+		<javac srcdir="${dir.src}" includeantruntime="false" debug="on" debuglevel="lines,vars,source" source="1.6" target="1.6"  destdir="${dir.build}"  fork="false" memoryInitialSize="256m" memoryMaximumSize="1024m" encoding="EUC-KR" classpathref="classpath" />
+	   	<echo message="compile - end"/>			
+	</target>
+	
+	<target name="jar" depends="compile">
+   		<echo message="jar - start"/>		
+		<property name="jar.package.name" value="cabis_business.jar" />
+	
+		<property name="version.num" value="1.00"/>
+		<buildnumber file="build.num"/>
+		<tstamp><format property="today" pattern="yyyyMMdd_HHmmss" /></tstamp>
+		<manifest file="MANIFEST.MF">
+			<attribute name="Built-By" value="jeus6"/>
+			<attribute name="Implementation-Version" value="${version.num}-b${build.number}"/>
+			<attribute name="Built-Date" value="${today}"/>
+		</manifest>
+		<jar destfile="${dir.dist}/cabis_business_${today}.jar" basedir="${dir.build}"  
+			includes="**/*.class"
+			excludes="*/classes/*"
+			manifest="MANIFEST.MF" />
+		<jar destfile="${dir.dist}/cabis_business.jar" basedir="${dir.build}" 
+			includes="**/*.class"
+			excludes="*/classes/*"
+			manifest="MANIFEST.MF" />		 
+   		<echo message="jar - end"/>		
+	</target>
+	
+	<!--target name="deploy.jar" depends="jar">
+   		<echo message="deploy.jar - start"/>
+        <copy file="${dir.dist}/cabis_business.jar" todir="${destdir.root}/WEB-INF/classes" />
+        <exec dir="${destdir.root}/WEB-INF/classes" executable="/usr/java6/bin/jar">
+        	<arg line="-xf ${destdir.root}/WEB-INF/classes/cabis_business.jar" />
+        </exec>
+        <delete file="${destdir.root}/WEB-INF/classes/cabis_business.jar" />
+        <echo message="deploy.jar - end"/>
+    </target-->
+	
+	<!-- CABISUI -->
+	<target name="web">
+ 		<echo message="WEB 압축 - start"/>
+		<property name="web.package.name" value="cabis_web.tar.gz" />
+ 			
+		<tstamp><format property="today" pattern="yyyyMMdd_HHmmss" /></tstamp>		
+		<!--tar tarfile="${dir.dist}/cabis_web_${today}.tar.gz" longfile="gnu" compression="gzip">
+			<fileset dir="${dir.web}">
+				<exclude name="c/bc/lm/**"/>
+				<exclude name="Cabis_Update33U/**"/>
+				<exclude name="comm/**"/>
+				<exclude name="dsom/**"/>
+				<exclude name="MailAttachment/**"/>
+				<exclude name="META-INF/**"/>
+				<exclude name="WEB-INF/**" />
+				<exclude name="cabis*.xml" />
+				<exclude name="cabis*.xml.bak" />
+			</fileset>
+		</tar-->
+		<tar tarfile="${dir.dist}/cabis_web.tar.gz" longfile="gnu" compression="gzip">
+			<fileset dir="${dir.web}">
+				<!--exclude name="c/bc/lm/**"/-->
+				<exclude name="Cabis_Update33U/**"/>
+				<exclude name="comm/**"/>
+				<exclude name="dsom/**"/>
+				<exclude name="MailAttachment/**"/>
+				<exclude name="META-INF/**"/>
+				<exclude name="WEB-INF/**" />
+				<exclude name="cabis*.xml" />
+				<exclude name="cabis*.xml.bak" />
+			</fileset>
+		</tar>	
+ 		<echo message="WEB 압축 - end"/>
+	</target>
+	
+	<!--target name="deploy.web" depends="web">
+	    <echo message="WEB 압축해제 - start"/>
+			<copy file="${dir.dist}/cabis_web.tar.gz" todir="${destdir.root}" />
+			<exec dir="${destdir.root}" executable="gzip">
+				<arg line="-d ${destdir.root}/cabis_web.tar.gz" />
+			</exec>
+			<exec dir="${destdir.root}" executable="tar">
+				<arg line="-xf ${destdir.root}/cabis_web.tar" />
+			</exec>
+			<delete file="${destdir.root}/cabis_web.tar" />
+	    <echo message="WEB 압축해제 - end"/>		
+	</target-->
+	
+	<!-- FTP -->
+	<target name="ftp.package" depends="web">
+		<ftp.macro  package.name="${web.package.name}" />
+	</target>
+	
+	<macrodef name="ftp.macro">
+		<attribute name="package.name" />
+		<sequential>
+			<!--touch file="${target.dir}/@{package.name}.FIN" /-->
+			<retry retrycount="3">
+				<ftp binary="true" action="put" passive="true"
+									verbose="yes" server="${deploy.host}"
+									userid="${deploy.user}"
+									password="${deploy.password}"
+								remotedir="${ftp.deploy.dir}">
+					<fileset dir="${dir.dist}">
+						<include name="@{package.name}" />
+						<!--include name="@{package.name}.FIN" /-->
+					</fileset>
+				</ftp>
+			</retry>
+			<!--delete file="${target.dir}/@{package.name}.FIN" /-->
+		</sequential>
+	</macrodef>
+	
+	<!-- Deploy -->
+	<target name="deploy" depends="ftp.package">
+   		<echo message="deploy.jar - start"/>
+    		<!--scp trust="true" file="${dir.dist}/cabis_business_${today}.jar" sftp="true" todir="${username}:${password}@${remote}:${remotedir.work}" />
+      		<scp trust="true" file="${dir.dist}/cabis_business.jar" sftp="true" todir="${username}:${password}@${remote}:${remotedir.work}"  /-->
+			<sshexec host="${deploy.host}" username="${deploy.user}" password="${deploy.password}" trust="true" command="cd ${was.deploy.dir};gzip -df ${ftp.deploy.dir}/${web.package.name};tar -xf ${ftp.deploy.dir}/cabis_web.tar;rm ${ftp.deploy.dir}/cabis_web.tar" />
+    	<echo message="deploy.jar - end"/>
+    </target>
+	
+	<!--target name="deploy.telnet"  depends="ftp.package">
+		<echo message="before deploy.incremental" />
+		<deploy.macro jar.package.name="${jar.package.name}">
+		<telnet.elements/>
+		</deploy.macro>
+		<echo message="after deploy.incremental" />
+	</target>
+	
+	<macrodef name="deploy.macro">
+		<attribute name="jar.package.name" />
+		<element name="telnet.elements" implicit="no" />
+		<sequential>
+			<telnet userid ="${deploy.user}" password="${deploy.password}" server="${deploy.host}" timeout="10" initialcr="yes">				
+				<read string="${telnet_prompt}"/>
+				<write>cd ${was.deploy.dir}</write>
+
+				<read string="${was.deploy.dir}" />
+				<write>jar xf ${ftp.deploy.dir}/@{jar.package.name}</write>
+				
+				<read>${was.deploy.dir}</read>
+				<write>rm ${ftp.deploy.dir}/@{jar.package.name}</write>	
+				<write>rm ${ftp.deploy.dir}/@{jar.package.name}.FIN</write>
+				
+				<read>${was.deploy.dir}</read>
+				<write>exit</write>
+				<read>${was.deploy.dir}</read>
+				
+				<telnet.elements />			
+			</telnet>			
+		</sequential>
+	</macrodef-->
+	
+	<!-- Reboot -->
+	<!--target name="was.init" depends="deploy">
+		 <property name="jeus.home" value="D:\ci\jeus_lib"/>
+		 <property name="node.name" value="GeminiDEV1"/>
+	 	 <property name="jeus.baseport" value="19736"/>
+		 <property name="username" value="administrator"/>
+		 <property name="password" value="jeusadmin"/>
+		 <path id="jeus.libraries">
+		 	<fileset dir="${jeus.home}" includes="*.jar"/>
+		 </path>
+		 <taskdef resource="jeus/util/ant/jeusant.properties">
+		 <classpath>
+		 <path refid="jeus.libraries"/>
+		 </classpath>
+		 </taskdef>
+	</target>
+	
+	<target name="was.start" >
+	   <boot node="${node.name}"
+	         username="${username}"
+	         password="${password}"/>
+	  </target>
+	
+	<target name="was.down" >
+	   <down node="${node.name}"
+	         username="${username}"
+	         password="${password}"/>
+	</target-->
+	
+	<target name="was.init" depends="deploy">
+   		<echo message="WAS 초기화 - start!!"/>
+		
+		<echo message="WAS 초기화 - start"/>
+		<property name="jeus.home" value="C:/CABIS/was/jeus/lib" />
+		<property name="node.name" value="165.141.208.237" />
+		<property name="jeus.baseport" value="19736"/>
+		<property name="user" value="administrator" />
+		<property name="pass" value="jeusadmin" />
+		<path id="jeus.libraries">
+			<fileset dir="C:/CABIS/was/jeus/lib" includes="*.jar" />
+		</path>		
+		<taskdef resource="jeus/util/ant/jeusant.properties">
+			<classpath>
+				<path refid="jeus.libraries" />
+			</classpath>
+		</taskdef>
+   		<echo message="WAS 초기화 - end"/>
+		
+		<echo message="WAS 초기화 - end!!"/>
+	</target>
+
+	<target name="was.start">
+   		<echo message="WAS 기동 - start"/>
+		<!--sshexec host="${deploy.host}" username="${deploy.user}" password="${deploy.password}" trust="true" command="/home/jeus6/jeus/bin/jeus -Uadministrator -Pjeusadmin &amp;" /-->		
+		<!--sshexec host="${deploy.host}" username="${deploy.user}" password="${deploy.password}" trust="true" command="/home/jeus6/jeus/bin/jboot" /-->
+		
+		<boot node="${node.name}" username="${user}" password="${pass}" />
+		
+   		<echo message="WAS 기동 - end"/>
+	</target>
+
+	<target name="was.down">
+   		<echo message="WAS 종료 - start"/>
+		<!--sshexec host="${deploy.host}" username="${deploy.user}" password="${deploy.password}" trust="true" command="/home/jeus6/jeus/bin/jeusadmin GeminiDEV1 -Uadministrator -Pjeusadmin jeusexit" /-->
+		<!--sshexec host="${deploy.host}" username="${deploy.user}" password="${deploy.password}" trust="true" command="/home/jeus6/jeus/bin/jdown" /-->
+		
+		<down node="${node.name}" username="${user}" password="${pass}" />
+		
+	    <echo message="WAS 종료 - end"/>
+	</target>
+
+	<target name="was.restart" depends="was.init, was.down, was.start" />
+
+</project>
