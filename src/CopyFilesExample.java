@@ -47,6 +47,7 @@ public class CopyFilesExample {
 		
 		BufferedReader br = null;
 		BufferedWriter bw = null;
+		
 		try {
 			// Log Æú´õ
 			String logDir = "C:\\jcf-dev\\was\\apache-tomcat-6.0.28\\logs";
